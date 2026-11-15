@@ -1,0 +1,590 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vertex Gestão — prévia visual</title>
+<style>
+/* ===== Paleta Concreto (escolhida) + verde e âmbar derivados ===== */
+:root { --p:#4A5A63; --dark:#26333A; --bg:#F2F4F5; --accent:#00A3B4; --danger:#E2574C; --ok:#2E9E6B; --warn:#E3A008; }
+
+:root {
+  --card:#fff; --ink:#111B20; --ink2:#4B5960; --line:#D9DFE2;
+  --mono: ui-monospace, "Cascadia Mono", "Roboto Mono", Consolas, monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+* { box-sizing:border-box; margin:0; }
+html, body { height:100%; }
+body { font-family:var(--sans); background:var(--bg); color:var(--ink); font-size:16px; line-height:1.35; -webkit-font-smoothing:antialiased; }
+button { font:inherit; color:inherit; cursor:pointer; border:0; background:none; }
+svg { width:24px; height:24px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; flex:none; }
+
+/* ===== Estrutura ===== */
+.app { min-height:100%; display:flex; flex-direction:column; }
+.side { display:none; }
+.main { flex:1; min-width:0; padding-bottom:84px; }
+
+.topo { background:var(--dark); color:#fff; padding:14px 16px 0; }
+.topo-linha { display:flex; align-items:center; gap:12px; }
+.selo { width:20px; height:20px; border-radius:5px; background:var(--accent); flex:none; }
+.obra { flex:1; min-width:0; }
+.obra b { display:block; font-size:19px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.obra small { font-family:var(--mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; opacity:.75; }
+.btn-topo { min-height:44px; padding:0 14px; border-radius:8px; background:rgba(255,255,255,.14); color:#fff; font-family:var(--mono); font-size:12px; letter-spacing:.08em; text-transform:uppercase; }
+.abas { display:flex; gap:4px; margin-top:10px; overflow-x:auto; scrollbar-width:none; }
+.abas::-webkit-scrollbar, .chips::-webkit-scrollbar { display:none; }
+.aba { min-height:44px; padding:0 14px; font-family:var(--mono); font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:rgba(255,255,255,.65); border-bottom:3px solid transparent; white-space:nowrap; }
+.aba.on { color:#fff; border-color:var(--accent); }
+
+.corpo { padding:12px; display:grid; gap:10px; max-width:1180px; margin:0 auto; }
+.tela { display:none; } .tela.on { display:block; }
+
+/* ===== Seletor de obra ===== */
+body[data-obra="rm"] [data-obra="cm"], body[data-obra="cm"] [data-obra="rm"] { display:none; }
+.topo { position:relative; }
+.menu-obra { display:none; position:absolute; left:12px; right:12px; top:62px; z-index:8; background:var(--card); color:var(--ink); border-radius:10px; border:1px solid var(--line); box-shadow:0 12px 32px rgba(0,0,0,.28); overflow:hidden; max-width:460px; margin-left:auto; }
+.menu-obra.on { display:block; }
+.menu-obra .rot { display:block; padding:12px 14px 8px; }
+.op-obra { display:flex; align-items:center; gap:12px; width:100%; text-align:left; padding:12px 14px; min-height:76px; border-top:1px solid var(--line); }
+.op-obra.on { background:color-mix(in srgb, var(--accent) 12%, #fff); box-shadow:inset 4px 0 0 var(--accent); }
+.op-obra .cod { font-family:var(--mono); font-size:13px; font-weight:700; background:var(--dark); color:#fff; border-radius:6px; padding:8px 8px; flex:none; }
+.op-obra .tx b { display:block; font-size:17px; }
+.op-obra .tx small { display:block; font-family:var(--mono); font-size:11px; letter-spacing:.04em; text-transform:uppercase; color:var(--ink2); margin-top:3px; }
+
+/* ===== Cartões ===== */
+.card { background:var(--card); border-radius:8px; border:1px solid var(--line); }
+.card-h { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:12px 14px 8px; }
+.rot { font-family:var(--mono); font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink2); }
+.link { font-family:var(--mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--p); min-height:44px; padding:0 4px; font-weight:700; }
+
+.kpis { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.kpi { display:flex; flex-direction:column; justify-content:flex-start; background:var(--card); border:1px solid var(--line); border-top:4px solid var(--p); border-radius:8px; padding:10px 12px 12px; text-align:left; min-height:104px; }
+.kpi.acc { border-top-color:var(--accent); } .kpi.red { border-top-color:var(--danger); } .kpi.grn { border-top-color:var(--ok); }
+.kpi .num { display:block; white-space:nowrap; font-size:34px; font-weight:800; letter-spacing:-.02em; line-height:1.05; margin-top:6px; }
+.kpi .num small { font-size:15px; font-weight:700; }
+.kpi.red .num { color:var(--danger); }
+.kpi .sub { display:block; font-family:var(--mono); font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink2); margin-top:4px; }
+.kpi .sub.bad { color:var(--danger); font-weight:700; }
+
+/* ===== Linhas de lista ===== */
+.lin { display:flex; align-items:center; gap:10px; width:100%; text-align:left; padding:11px 14px; min-height:60px; border-top:1px solid var(--line); }
+.lin.alerta { background:color-mix(in srgb, var(--danger) 9%, #fff); }
+.lin .tx { flex:1; min-width:0; }
+.tx { min-width:0; }
+.tx .t1 { display:block; font-size:16px; font-weight:650; }
+.tx .t2 { display:block; font-family:var(--mono); font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink2); margin-top:3px; }
+.lin .t2 b { color:var(--danger); }
+.val { font-size:20px; font-weight:800; white-space:nowrap; text-align:right; }
+.val small { display:block; font-family:var(--mono); font-size:10px; font-weight:400; letter-spacing:.08em; text-transform:uppercase; color:var(--ink2); }
+
+.tag { display:inline-block; font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; padding:5px 8px; border-radius:5px; white-space:nowrap; background:#E4E9EC; color:var(--ink); }
+.tag.ok { background:var(--ok); color:#fff; } .tag.warn { background:var(--warn); color:#1A1400; } .tag.bad { background:var(--danger); color:#fff; } .tag.info { background:var(--p); color:#fff; }
+
+.barra { height:8px; border-radius:4px; background:#E4E9EC; overflow:hidden; margin-top:7px; }
+.barra i { display:block; height:100%; background:var(--accent); border-radius:4px; }
+.barra i.ok { background:var(--ok); } .barra i.warn { background:var(--warn); } .barra i.bad { background:var(--danger); }
+.barra.dupla { position:relative; height:12px; }
+.barra.dupla i { position:absolute; left:0; top:0; }
+.barra.dupla i.comp { background:color-mix(in srgb, var(--p) 45%, #fff); }
+.barra.dupla i.inc { background:var(--p); }
+
+.duas { display:grid; gap:10px; }
+.fin { padding:10px 14px 12px; border-top:1px solid var(--line); }
+.fin-top { display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
+.fin-top b { font-size:16px; } .fin-top span { font-size:20px; font-weight:800; }
+.leg { display:flex; flex-wrap:wrap; gap:4px 14px; margin-top:7px; font-family:var(--mono); font-size:11px; letter-spacing:.04em; text-transform:uppercase; color:var(--ink2); }
+.leg i { display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:5px; vertical-align:-1px; }
+
+.efe { display:grid; grid-template-columns:1fr auto; gap:4px 12px; align-items:center; padding:10px 14px; border-top:1px solid var(--line); }
+.efe b { font-size:16px; font-weight:650; } .efe .n { font-size:22px; font-weight:800; text-align:right; }
+.efe .d { font-family:var(--mono); font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink2); grid-column:1 / -1; }
+.efe .d.bad { color:var(--danger); font-weight:700; }
+
+/* ===== Chips e botões ===== */
+.chips { display:flex; gap:8px; overflow-x:auto; scrollbar-width:none; padding:2px 0 4px; }
+.chip { min-height:44px; padding:0 16px; border-radius:22px; border:2px solid var(--line); background:var(--card); font-weight:650; white-space:nowrap; }
+.chip.on { background:var(--dark); border-color:var(--dark); color:#fff; }
+.btn { min-height:48px; padding:0 18px; border-radius:8px; font-weight:700; font-size:16px; display:inline-flex; align-items:center; justify-content:center; gap:8px; }
+.btn.pri { background:var(--p); color:#fff; } .btn.sec { background:var(--card); border:2px solid var(--p); color:var(--p); }
+.btn.ok { background:var(--ok); color:#fff; } .btn.bad { background:var(--card); border:2px solid var(--danger); color:var(--danger); }
+.acoes { display:flex; gap:8px; flex-wrap:wrap; padding:4px 14px 14px; }
+.acoes .btn { flex:1; min-width:140px; }
+
+/* ===== Avanço ===== */
+.pav { display:grid; grid-template-columns:56px 1fr auto; gap:10px; align-items:center; width:100%; text-align:left; padding:10px 14px; min-height:64px; border-top:1px solid var(--line); }
+.pav .n { font-size:26px; font-weight:800; letter-spacing:-.02em; }
+.pav .n small { font-size:13px; font-weight:700; }
+.pav.atual { background:color-mix(in srgb, var(--accent) 10%, #fff); box-shadow:inset 4px 0 0 var(--accent); }
+.det { padding:4px 14px 14px; background:color-mix(in srgb, var(--accent) 10%, #fff); box-shadow:inset 4px 0 0 var(--accent); }
+.det .lin { background:var(--card); border:1px solid var(--line); border-radius:8px; margin-top:8px; }
+.datas { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.data { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:8px 10px; }
+.data b { display:block; font-size:17px; font-weight:800; margin-top:3px; }
+.data b.bad { color:var(--danger); }
+
+/* ===== Medição ===== */
+.ct { padding:12px 14px 4px; border-top:1px solid var(--line); }
+.ct-h { display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
+.ct-h b { font-size:18px; font-weight:700; display:block; }
+.nums { display:grid; grid-template-columns:repeat(2,1fr); gap:8px 12px; margin:10px 0; }
+.nums div b { display:block; font-size:18px; font-weight:800; }
+.nums div.dest b { font-size:24px; color:var(--p); }
+
+/* ===== Estado vazio ===== */
+.vazio { text-align:center; padding:44px 20px 40px; }
+.vazio .ic { width:96px; height:96px; border-radius:50%; background:color-mix(in srgb, var(--accent) 16%, #fff); color:var(--p); display:grid; place-items:center; margin:0 auto 18px; }
+.vazio .ic svg { width:46px; height:46px; }
+.vazio h2 { font-size:22px; font-weight:800; }
+.vazio p { color:var(--ink2); max-width:340px; margin:8px auto 20px; font-size:16px; }
+
+/* ===== Navegação ===== */
+.nav-inf { position:fixed; left:0; right:0; bottom:0; background:var(--card); border-top:1px solid var(--line); display:flex; z-index:5; padding-bottom:env(safe-area-inset-bottom); }
+.nav-inf button, .side nav button { display:flex; align-items:center; gap:4px; color:var(--ink2); font-family:var(--mono); font-size:11px; letter-spacing:.06em; text-transform:uppercase; }
+.nav-inf button { flex:1; flex-direction:column; justify-content:center; min-height:64px; border-top:3px solid transparent; }
+.nav-inf button.on { color:var(--p); border-top-color:var(--accent); font-weight:700; }
+
+.paleta { display:flex; align-items:center; gap:8px; padding:10px 12px; font-family:var(--mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink2); }
+.paleta select { min-height:44px; flex:1; border:2px solid var(--line); border-radius:8px; padding:0 10px; font:inherit; font-size:14px; text-transform:none; letter-spacing:0; background:var(--card); color:var(--ink); }
+.nota { font-family:var(--mono); font-size:11px; color:var(--ink2); padding:0 12px 6px; }
+
+.toast { position:fixed; left:50%; bottom:96px; transform:translateX(-50%); background:var(--dark); color:#fff; padding:12px 18px; border-radius:8px; font-size:15px; opacity:0; pointer-events:none; transition:opacity .2s; z-index:9; max-width:90vw; text-align:center; }
+.toast.on { opacity:1; }
+
+/* ===== Tela larga: menu lateral fixo ===== */
+@media (min-width: 900px) {
+  .app { flex-direction:row; }
+  .side { display:flex; flex-direction:column; width:236px; flex:none; background:var(--dark); color:#fff; position:sticky; top:0; height:100vh; padding:18px 12px; }
+  .marca { display:flex; align-items:center; gap:10px; font-weight:800; font-size:18px; padding:0 8px 18px; }
+  .side nav { display:grid; gap:4px; }
+  .side nav button { min-height:48px; padding:0 12px; border-radius:8px; color:rgba(255,255,255,.72); font-size:13px; gap:12px; width:100%; }
+  .side nav button.on { background:rgba(255,255,255,.14); color:#fff; box-shadow:inset 4px 0 0 var(--accent); font-weight:700; }
+  .side .pe { margin-top:auto; }
+  .side .paleta { color:rgba(255,255,255,.7); padding:10px 4px; flex-direction:column; align-items:stretch; }
+  .nav-inf, .so-cel { display:none; }
+  .main { padding-bottom:24px; }
+  .topo { padding:16px 24px 0; }
+  .corpo { padding:18px 24px; gap:14px; }
+  .kpis { gap:14px; }
+  .kpi .num { font-size:42px; }
+  .duas { grid-template-columns:1fr 1fr; gap:14px; align-items:start; }
+  .nums { grid-template-columns:repeat(4,1fr); }
+  .toast { bottom:28px; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Menu lateral (tela larga) -->
+  <aside class="side">
+    <div class="marca"><span class="selo"></span>Vertex Gestão</div>
+    <nav id="navSide"></nav>
+  </aside>
+
+  <div class="main">
+    <header class="topo">
+      <div class="topo-linha">
+        <span class="selo so-cel"></span>
+        <div class="obra">
+          <b id="obNome">Residencial Modelo</b>
+          <small id="obSub">RM-01 · 5 torres · 562 aptos</small>
+        </div>
+        <button class="btn-topo" id="btnObra" aria-haspopup="true" aria-label="Trocar obra">Trocar ▾</button>
+      </div>
+      <div class="menu-obra" id="menuObra">
+        <span class="rot">Suas obras · 2</span>
+        <button class="op-obra" data-obra-id="rm">
+          <span class="cod">RM-01</span>
+          <span class="tx"><b>Residencial Modelo</b><small>Incorporadora Modelo S.A. · Av. das Palmeiras, 1200</small><small>Início 10/03/2025 · meta 30/06/2028</small></span>
+          <span class="tag ok">Em andamento</span>
+        </button>
+        <button class="op-obra" data-obra-id="cm">
+          <span class="cod">CM-02</span>
+          <span class="tx"><b>Condomínio Modelo II</b><small>Habitacional Modelo Ltda. · Rua dos Ipês, 450</small><small>Início 01/09/2026 · meta 20/12/2027</small></span>
+          <span class="tag ok">Em andamento</span>
+        </button>
+      </div>
+      <div class="abas" id="abas"></div>
+    </header>
+
+
+    <!-- ================= PAINEL ================= -->
+    <section class="tela on" id="t-painel">
+      <!-- Obra 2: Condomínio Modelo II -->
+      <div class="corpo" data-obra="cm">
+        <div class="kpis">
+          <button class="kpi acc" data-ir="avanco"><span class="rot">Efetivo</span><span class="num">41</span><span class="sub">igual a ontem</span></button>
+          <button class="kpi red" data-ir="prog"><span class="rot">Parado</span><span class="num">1</span><span class="sub bad">há 2 dias</span></button>
+          <button class="kpi" data-ir="medicao"><span class="rot">A medir</span><span class="num">15,1</span><span class="sub">R$ mil · 1 empr.</span></button>
+        </div>
+        <div class="duas">
+          <div class="card">
+            <div class="card-h"><span class="rot">Ciclo de laje · 09–15/11</span><button class="link" data-ir="avanco">Ver avanço</button></div>
+            <button class="lin" data-ir="avanco"><span class="tx"><span class="t1">Bloco A · 3º pavimento</span><span class="t2">Dia 4 de 7 · 1 de 3 lajes no mês</span><span class="barra"><i class="ok" style="width:57%"></i></span></span><span class="tag ok">Laje</span></button>
+            <button class="lin" data-ir="avanco"><span class="tx"><span class="t1">Bloco B · 2º pavimento</span><span class="t2">Dia 3 de 7 · 0 de 3 lajes no mês</span><span class="barra"><i class="warn" style="width:43%"></i></span></span><span class="tag warn">Pilares e escada</span></button>
+            <button class="lin" data-ir="avanco"><span class="tx"><span class="t1">Blocos C e D</span><span class="t2">Fundação concluída · 1ª laje prevista 02/12</span></span><span class="tag">Não iniciado</span></button>
+          </div>
+          <div class="card">
+            <div class="card-h"><span class="rot">Parado · 1 restrição</span><button class="link" data-ir="prog">Ver todas</button></div>
+            <button class="lin" data-ir="prog"><span class="tx"><span class="t1">Bloco estrutural 14 em falta</span><span class="t2">Bloco B · 2º · Alvenaria · resp. Administrativo</span></span><span class="tag warn">Material · 2 dias</span></button>
+          </div>
+        </div>
+        <div class="duas">
+          <div class="card">
+            <div class="card-h"><span class="rot">Pronto para medir</span><button class="link" data-ir="medicao">Medição</button></div>
+            <button class="lin" data-ir="medicao"><span class="tx"><span class="t1">Alvenaria Sigma</span><span class="t2">Bloco A · Alvenaria 3º · 420 m²</span></span><span class="val">R$ 15.120<small>Bloco A</small></span></button>
+          </div>
+          <div class="card">
+            <div class="card-h"><span class="rot">Efetivo · hoje e semana</span><span class="rot">média sem. 40</span></div>
+            <div class="efe"><b>Alvenaria Sigma</b><span class="n">27</span><span class="d">Bloco A: 16 · Bloco B: 11 · igual a ontem</span></div>
+            <div class="efe"><b>Lajes Ômega</b><span class="n">14</span><span class="d">Bloco A · igual a ontem</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Obra 1: Residencial Modelo -->
+      <div class="corpo" data-obra="rm">
+        <div class="kpis">
+          <button class="kpi acc" data-ir="avanco">
+            <span class="rot">Efetivo</span>
+            <span class="num">96</span>
+            <span class="sub bad">▼ 8 vs ontem</span>
+          </button>
+          <button class="kpi red" data-ir="prog">
+            <span class="rot">Parado</span>
+            <span class="num">3</span>
+            <span class="sub bad">1 há 16 dias</span>
+          </button>
+          <button class="kpi" data-ir="medicao">
+            <span class="rot">A medir</span>
+            <span class="num">97,4</span>
+            <span class="sub">R$ mil · 3 empr.</span>
+          </button>
+        </div>
+
+        <div class="duas">
+          <div class="card">
+            <div class="card-h"><span class="rot">Ciclo de laje · 09–15/11</span><button class="link" data-ir="avanco">Ver avanço</button></div>
+            <button class="lin" data-ir="avanco">
+              <span class="tx"><span class="t1">Torre 1 · 14º pavimento</span><span class="t2">Dia 5 de 7 · 2 de 4 lajes no mês</span><span class="barra"><i class="ok" style="width:71%"></i></span></span>
+              <span class="tag ok">Laje</span>
+            </button>
+            <button class="lin" data-ir="avanco">
+              <span class="tx"><span class="t1">Torre 2 · 12º pavimento</span><span class="t2">Dia 4 de 7 · 1 de 4 lajes no mês</span><span class="barra"><i class="warn" style="width:57%"></i></span></span>
+              <span class="tag warn">Pilares e escada</span>
+            </button>
+            <button class="lin alerta" data-ir="avanco">
+              <span class="tx"><span class="t1">Torre 2 · 11º pavimento</span><span class="t2">Concretou 10/11 · <b>5 dias de atraso</b></span></span>
+              <span class="tag bad">+5 dias</span>
+            </button>
+            <button class="lin" data-ir="avanco">
+              <span class="tx"><span class="t1">Torres 3, 4 e 5 · Fase 2</span><span class="t2">Em mobilização · 1ª laje prevista 30/11</span></span>
+              <span class="tag">Não iniciado</span>
+            </button>
+          </div>
+
+          <div class="card">
+            <div class="card-h"><span class="rot">Parado · 3 restrições abertas</span><button class="link" data-ir="prog">Ver todas</button></div>
+            <button class="lin alerta" data-ir="prog">
+              <span class="tx"><span class="t1">Revisão de fôrma do térreo pendente</span><span class="t2">Torre 3 · 1º · Forma · resp. Planejador</span></span>
+              <span class="tag bad">Projeto · 16 dias</span>
+            </button>
+            <button class="lin alerta" data-ir="prog">
+              <span class="tx"><span class="t1">Aço CA-50 10 mm não entregue</span><span class="t2">Torre 2 · 12º · Armação · prometido 14/11</span></span>
+              <span class="tag bad">Material · 5 dias</span>
+            </button>
+            <button class="lin" data-ir="prog">
+              <span class="tx"><span class="t1">Grua em manutenção preventiva</span><span class="t2">Torre 1 · resp. Planejador</span></span>
+              <span class="tag warn">Equip. · 1 dia</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="duas">
+          <div class="card">
+            <div class="card-h"><span class="rot">Pronto para medir · por empreiteiro</span><button class="link" data-ir="medicao">Medição</button></div>
+            <button class="lin" data-ir="medicao">
+              <span class="tx"><span class="t1">Formas Beta</span><span class="t2">Torre 1 · Forma 14º · 1.050 m²</span></span>
+              <span class="val">R$ 39.900<small>Torre 1</small></span>
+            </button>
+            <button class="lin" data-ir="medicao">
+              <span class="tx"><span class="t1">Estrutural Alfa</span><span class="t2">Torre 1 · Armação 14º · 15.200 kg</span></span>
+              <span class="val">R$ 31.920<small>Torre 1</small></span>
+            </button>
+            <button class="lin" data-ir="medicao">
+              <span class="tx"><span class="t1">Alvenaria Gama</span><span class="t2">Torre 1 · Alvenaria 6º · 610 m²</span></span>
+              <span class="val">R$ 25.620<small>Torre 1</small></span>
+            </button>
+          </div>
+
+          <div class="card">
+            <div class="card-h"><span class="rot">Efetivo · hoje e semana</span><span class="rot">média sem. 97</span></div>
+            <div class="efe"><b>Estrutural Alfa</b><span class="n">38</span><span class="d">Torre 1: 22 · Torre 2: 16 · igual a ontem</span></div>
+            <div class="efe" style="background:color-mix(in srgb, var(--danger) 9%, #fff)"><b>Formas Beta</b><span class="n" style="color:var(--danger)">21</span><span class="d bad">▼ 8 pessoas vs ontem · maior queda da semana</span></div>
+            <div class="efe"><b>Alvenaria Gama</b><span class="n">24</span><span class="d">Torre 1 · igual a ontem</span></div>
+            <div class="efe"><b>Acabamentos Delta</b><span class="n">13</span><span class="d">Torre 1 · igual a ontem</span></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-h"><span class="rot">Saúde financeira</span><button class="link" data-toast="Aqui abre o Financeiro, por fase e por torre">Abrir</button></div>
+          <div class="fin">
+            <div class="fin-top"><b>Fase 1 · Torres 1 e 2</b><span>R$ 96,0 mi <span class="rot">receita</span></span></div>
+            <div class="barra dupla"><i class="comp" style="width:72%"></i><i class="inc" style="width:44%"></i></div>
+            <div class="leg"><span><i style="background:var(--p)"></i>Incorrido R$ 21,3 mi</span><span><i style="background:color-mix(in srgb, var(--p) 45%, #fff)"></i>Comprometido R$ 34,8 mi</span><span>Custo previsto R$ 48,4 mi</span><span class="tag ok">No orçamento</span></div>
+          </div>
+          <div class="fin">
+            <div class="fin-top"><b>Torre 2 · material</b><span>R$ 7,9 mi <span class="rot">de 14,8 mi</span></span></div>
+            <div class="barra"><i class="warn" style="width:53%"></i></div>
+            <div class="leg"><span>Consumo 6% acima do previsto para o 12º pavimento</span><span class="tag warn">Atenção</span></div>
+          </div>
+          <div class="fin">
+            <div class="fin-top"><b>Fase 2 · Torres 3, 4 e 5</b><span>R$ 0,4 mi <span class="rot">incorrido</span></span></div>
+            <div class="barra"><i style="width:2%"></i></div>
+            <div class="leg"><span>Mobilização · 60 sacos de cimento transferidos da Fase 1 em 12/11</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= AVANÇO ================= -->
+    <section class="tela" id="t-avanco">
+      <div class="corpo" data-obra="cm">
+        <div class="chips"><button class="chip on">Bloco A</button><button class="chip">Bloco B</button><button class="chip">Bloco C</button><button class="chip">Bloco D</button></div>
+        <div class="kpis">
+          <div class="kpi grn"><span class="rot">Concretados</span><span class="num">2<small> / 5</small></span><span class="sub">40% do bloco</span></div>
+          <div class="kpi acc"><span class="rot">Ciclo atual</span><span class="num">4<small> / 7</small></span><span class="sub">dias · 3º Laje</span></div>
+          <div class="kpi"><span class="rot">Lajes no mês</span><span class="num">1<small> / 3</small></span><span class="sub">meta de novembro</span></div>
+        </div>
+        <div class="card">
+          <div class="card-h"><span class="rot">Pavimentos · Bloco A</span><span class="rot">prev. → real</span></div>
+          <button class="pav atual"><span class="n">3<small>º</small></span><span class="tx"><span class="t1">Concretagem prevista 14/11</span><span class="t2">1 conferido · Alvenaria 420 m²</span></span><span class="tag ok">Laje</span></button>
+          <button class="pav"><span class="n">2<small>º</small></span><span class="tx"><span class="t1">05/11 → 05/11</span><span class="t2">2 medidos · medição nº 2</span></span><span class="tag ok">Concretado</span></button>
+          <button class="pav"><span class="n">1<small>º</small></span><span class="tx"><span class="t1">27/10 → 29/10</span><span class="t2">2 medidos · medição nº 1</span></span><span class="tag warn">Concretado +2 dias</span></button>
+        </div>
+      </div>
+      <div class="corpo" data-obra="rm">
+        <div class="chips" id="torres">
+          <button class="chip on">Torre 1</button><button class="chip">Torre 2</button><button class="chip">Torre 3</button><button class="chip">Torre 4</button><button class="chip">Torre 5</button>
+        </div>
+
+        <div class="kpis">
+          <div class="kpi grn"><span class="rot">Concretados</span><span class="num">13<small> / 24</small></span><span class="sub">54% da torre</span></div>
+          <div class="kpi acc"><span class="rot">Ciclo atual</span><span class="num">5<small> / 7</small></span><span class="sub">dias · 14º Laje</span></div>
+          <div class="kpi"><span class="rot">Lajes no mês</span><span class="num">2<small> / 4</small></span><span class="sub">meta de novembro</span></div>
+        </div>
+
+        <div class="card">
+          <div class="card-h"><span class="rot">Pavimentos · Torre 1</span><span class="rot">prev. → real</span></div>
+
+          <button class="pav">
+            <span class="n">15<small>º</small></span>
+            <span class="tx"><span class="t1" style="font-weight:650">Concretagem prevista 21/11</span><span class="t2 rot">Sem avanço lançado</span></span>
+            <span class="tag">Não iniciado</span>
+          </button>
+
+          <button class="pav atual">
+            <span class="n">14<small>º</small></span>
+            <span class="tx"><span class="t1" style="font-weight:650">Concretagem prevista 14/11</span><span class="t2 rot">2 conferidos · 0 lançados</span></span>
+            <span class="tag ok">Laje</span>
+          </button>
+          <div class="det">
+            <div class="datas">
+              <div class="data"><span class="rot">Pilares</span><b>09/11</b></div>
+              <div class="data"><span class="rot">Laje</span><b>12/11</b></div>
+              <div class="data"><span class="rot">Concret.</span><b>14/11 prev.</b></div>
+            </div>
+            <div class="lin"><span class="tx"><span class="t1">Forma · 1.050 m²</span><span class="t2">Formas Beta · 11/11 · lançou Assistente</span></span><span class="tag ok">Conferido</span></div>
+            <div class="lin"><span class="tx"><span class="t1">Armação · 15.200 kg</span><span class="t2">Estrutural Alfa · 11/11 · lançou Assistente</span></span><span class="tag ok">Conferido</span></div>
+            <div class="acoes" style="padding:10px 0 0">
+              <button class="btn pri" data-toast="Aqui abre o formulário de novo avanço">+ Novo avanço</button>
+              <button class="btn sec" data-toast="Aqui você muda a etapa e as datas do ciclo">Atualizar ciclo</button>
+            </div>
+          </div>
+
+          <button class="pav">
+            <span class="n">13<small>º</small></span>
+            <span class="tx"><span class="t1" style="font-weight:650">06/11 → 07/11</span><span class="t2 rot">3 medidos · medição nº 6</span></span>
+            <span class="tag warn">Concretado +1 dia</span>
+          </button>
+          <button class="pav">
+            <span class="n">12<small>º</small></span>
+            <span class="tx"><span class="t1" style="font-weight:650">30/10 → 30/10</span><span class="t2 rot">3 medidos · medição nº 5</span></span>
+            <span class="tag ok">Concretado</span>
+          </button>
+          <button class="pav">
+            <span class="n">11<small>º</small></span>
+            <span class="tx"><span class="t1" style="font-weight:650">23/10 → 23/10</span><span class="t2 rot">3 medidos · medição nº 5</span></span>
+            <span class="tag ok">Concretado</span>
+          </button>
+          <button class="pav">
+            <span class="n">6<small>º</small></span>
+            <span class="tx"><span class="t1" style="font-weight:650">Alvenaria · 610 m²</span><span class="t2 rot">1 conferido · Alvenaria Gama</span></span>
+            <span class="tag info">Pronto p/ medir</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= MEDIÇÃO ================= -->
+    <section class="tela" id="t-medicao">
+      <div class="corpo" data-obra="cm">
+        <div class="kpis">
+          <div class="kpi"><span class="rot">A medir</span><span class="num">15,1</span><span class="sub">R$ mil · conferido</span></div>
+          <div class="kpi acc"><span class="rot">Aprovar</span><span class="num">0</span><span class="sub">nada pendente</span></div>
+          <div class="kpi grn"><span class="rot">Devolvidas</span><span class="num">0</span><span class="sub">em dia</span></div>
+        </div>
+        <div class="card">
+          <div class="card-h"><span class="rot">Contratos ativos · 1</span><button class="link" data-toast="Aqui baixa a lista em Excel">Exportar</button></div>
+          <div class="ct">
+            <div class="ct-h"><span><b>Alvenaria Sigma</b><span class="rot">CT-101 · Alvenaria · Bloco A</span></span><span class="tag ok">Aprovada</span></div>
+            <div class="nums">
+              <div class="dest"><span class="rot">Pronto p/ medir</span><b>R$ 15.120</b></div>
+              <div><span class="rot">Última aprovada</span><b>nº 2 · R$ 28.800</b></div>
+              <div><span class="rot">Medido acum.</span><b>R$ 54.000</b></div>
+              <div><span class="rot">Saldo</span><b>R$ 288.000</b></div>
+            </div>
+            <div class="barra"><i style="width:16%"></i></div>
+            <div class="acoes" style="padding:12px 0"><button class="btn pri" data-toast="Aqui cria a medição nº 3 com o avanço conferido">+ Nova medição</button></div>
+          </div>
+        </div>
+      </div>
+      <div class="corpo" data-obra="rm">
+        <div class="kpis">
+          <div class="kpi"><span class="rot">A medir</span><span class="num">97,4</span><span class="sub">R$ mil · conferido</span></div>
+          <div class="kpi acc"><span class="rot">Aprovar</span><span class="num">1</span><span class="sub">R$ 39.900</span></div>
+          <div class="kpi red"><span class="rot">Devolvidas</span><span class="num">1</span><span class="sub bad">há 9 dias</span></div>
+        </div>
+
+        <div class="chips">
+          <button class="chip on">Todas as torres</button><button class="chip">Fase 1</button><button class="chip">Fase 2</button><button class="chip">Torre 1</button><button class="chip">Torre 2</button>
+        </div>
+
+        <div class="card">
+          <div class="card-h"><span class="rot">Contratos ativos · 3</span><button class="link" data-toast="Aqui baixa a lista em Excel">Exportar</button></div>
+
+          <div class="ct">
+            <div class="ct-h"><span><b>Formas Beta</b><span class="rot">CT-002 · Forma · Torres 1 e 2</span></span><span class="tag warn">Aguardando aprovação</span></div>
+            <div class="nums">
+              <div class="dest"><span class="rot">Medição nº 5</span><b>R$ 39.900</b></div>
+              <div><span class="rot">Pronto p/ medir</span><b>R$ 39.900</b></div>
+              <div><span class="rot">Medido acum.</span><b>R$ 1.012.700</b></div>
+              <div><span class="rot">Saldo</span><b>R$ 963.300</b></div>
+            </div>
+            <div class="barra"><i style="width:51%"></i></div>
+            <div class="acoes" style="padding:12px 0">
+              <button class="btn ok" data-toast="Medição aprovada: os avanços passam a Medido">✓ Aprovar</button>
+              <button class="btn bad" data-toast="Aqui você escreve o motivo da devolução">Devolver</button>
+            </div>
+          </div>
+
+          <div class="ct">
+            <div class="ct-h"><span><b>Estrutural Alfa</b><span class="rot">CT-001 · Concretagem e armação · T1 e T2</span></span><span class="tag">Em preparo</span></div>
+            <div class="nums">
+              <div class="dest"><span class="rot">Medição nº 7</span><b>R$ 31.920</b></div>
+              <div><span class="rot">Última aprovada</span><b>nº 6 · R$ 18.525</b></div>
+              <div><span class="rot">Medido acum.</span><b>R$ 842.300</b></div>
+              <div><span class="rot">Saldo</span><b>R$ 867.700</b></div>
+            </div>
+            <div class="barra"><i style="width:49%"></i></div>
+            <div class="acoes" style="padding:12px 0">
+              <button class="btn sec" data-toast="Aqui abre a medição com os avanços conferidos">Abrir medição</button>
+            </div>
+          </div>
+
+          <div class="ct">
+            <div class="ct-h"><span><b>Alvenaria Gama</b><span class="rot">CT-003 · Alvenaria · Torre 1</span></span><span class="tag bad">Devolvida</span></div>
+            <div class="nums">
+              <div class="dest"><span class="rot">Medição nº 3</span><b>R$ 25.620</b></div>
+              <div><span class="rot">Motivo</span><b style="font-size:15px;font-weight:650">Quantidade do 5º pav. não confere</b></div>
+              <div><span class="rot">Medido acum.</span><b>R$ 268.900</b></div>
+              <div><span class="rot">Saldo</span><b>R$ 1.033.100</b></div>
+            </div>
+            <div class="barra"><i style="width:21%"></i></div>
+            <div class="acoes" style="padding:12px 0">
+              <button class="btn sec" data-toast="Aqui o planejador corrige e reenvia">Ver devolução</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= PROGRAMAÇÃO (estado vazio) ================= -->
+    <section class="tela" id="t-prog">
+      <div class="corpo">
+        <div class="chips">
+          <button class="chip on">Semana 16–22/11</button><button class="chip">Restrições</button>
+        </div>
+        <div class="card vazio">
+          <div class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M9 15h6M12 12v6"/></svg></div>
+          <h2>A próxima semana ainda está em branco</h2>
+          <p>Programe as atividades de cada torre e acompanhe aqui o PPC e o que travar pelo caminho.</p>
+          <button class="btn pri" data-toast="Aqui abre o formulário de nova atividade">+ Programar a primeira atividade</button>
+        </div>
+        <p class="nota">Exemplo de estado vazio. A semana atual (09–15/11) aparece preenchida no app.</p>
+      </div>
+    </section>
+  </div>
+
+  <nav class="nav-inf" id="navInf"></nav>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const telas = [
+  { id:'painel',  nome:'Painel',   abas:['Hoje','Semana','Mês','Fase 1','Fase 2'], ic:'<path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>' },
+  { id:'avanco',  nome:'Avanço',   abas:['Ciclo de laje','Serviços','Fotos'],      ic:'<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/>' },
+  { id:'prog',    nome:'Program.', abas:['Semana','Restrições','PPC'],             ic:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>' },
+  { id:'medicao', nome:'Medição',  abas:['Contratos','Medições'],                  ic:'<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>' },
+  { id:'mais',    nome:'Mais',     abas:[],                                        ic:'<circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>' },
+];
+const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
+
+function aviso(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('on');
+  clearTimeout(aviso.t); aviso.t = setTimeout(() => t.classList.remove('on'), 2200);
+}
+function ir(id) {
+  if (id === 'mais') return aviso('Mais: Diário · Notas · Estoque · Financeiro · Solicitações · Estrutura · Usuários');
+  const tela = telas.find(t => t.id === id);
+  $$('.tela').forEach(s => s.classList.toggle('on', s.id === 't-' + id));
+  $$('[data-nav]').forEach(b => b.classList.toggle('on', b.dataset.nav === id));
+  $('#abas').innerHTML = tela.abas.map((a, i) => `<button class="aba${i ? '' : ' on'}">${a}</button>`).join('');
+  window.scrollTo(0, 0);
+}
+/* Seletor de obra: troca todos os dados e lembra a escolha */
+const obras = {
+  rm: { nome:'Residencial Modelo',   sub:'RM-01 · 5 torres · 562 aptos' },
+  cm: { nome:'Condomínio Modelo II', sub:'CM-02 · 4 blocos · 320 aptos' },
+};
+function trocarObra(id, avisar) {
+  if (!obras[id]) id = 'rm';
+  document.body.dataset.obra = id;
+  $('#obNome').textContent = obras[id].nome; $('#obSub').textContent = obras[id].sub;
+  $$('.op-obra').forEach(b => b.classList.toggle('on', b.dataset.obraId === id));
+  try { localStorage.setItem('vertex-obra', id); } catch (e) {}
+  $('#menuObra').classList.remove('on');
+  if (avisar) { ir('painel'); aviso('Agora você está em: ' + obras[id].nome); }
+}
+const botoes = telas.map(t => `<button data-nav="${t.id}"><svg viewBox="0 0 24 24">${t.ic}</svg><span>${t.nome}</span></button>`).join('');
+$('#navSide').innerHTML = botoes; $('#navInf').innerHTML = botoes;
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (!b || b.id !== 'btnObra') if (!e.target.closest('#menuObra')) $('#menuObra').classList.remove('on');
+  if (!b) return;
+  if (b.id === 'btnObra') return $('#menuObra').classList.toggle('on');
+  if (b.dataset.obraId) return trocarObra(b.dataset.obraId, true);
+  if (b.dataset.nav) return ir(b.dataset.nav);
+  if (b.dataset.ir) return ir(b.dataset.ir);
+  if (b.dataset.toast) return aviso(b.dataset.toast);
+  if (b.classList.contains('aba') || b.classList.contains('chip')) {
+    $$('.' + b.classList[0], b.parentElement).forEach(o => o.classList.remove('on')); b.classList.add('on');
+  }
+});
+ir('painel');
+let guardada = 'rm'; try { guardada = localStorage.getItem('vertex-obra') || 'rm'; } catch (e) {}
+trocarObra(guardada, false);
+</script>
+</body>
+</html>
