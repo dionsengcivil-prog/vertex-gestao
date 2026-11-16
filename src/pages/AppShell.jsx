@@ -17,12 +17,14 @@ import { MedicaoDetalhe } from '../screens/medicaoDetalhe.jsx'
 import { Estrutura } from '../screens/estrutura.jsx'
 import { Usuarios } from '../screens/usuarios.jsx'
 import { Perfil } from '../screens/perfil.jsx'
+import { Notas } from '../screens/notas.jsx'
+import { Nota } from '../screens/nota.jsx'
 import { Mais } from '../screens/mais.jsx'
 import { EmBreve } from '../screens/embreve.jsx'
 
 // Uma shell só para os oito perfis: o que muda entre eles é o menu, que vem de
 // lib/perfis.js. Telas de detalhe pertencem a um item de menu (o "pai").
-const PAI = { pavimento: 'avanco', diarioDia: 'diario', contrato: 'medicao', medicaoDetalhe: 'medicao' }
+const PAI = { pavimento: 'avanco', diarioDia: 'diario', contrato: 'medicao', medicaoDetalhe: 'medicao', nota: 'notas' }
 
 function SeletorDeObra() {
   const { obras, obra, trocarObra } = useObra()
@@ -91,6 +93,8 @@ function Telas({ profile, aoSair }) {
       case 'medicao': corpo = <Medicao {...props} />; break
       case 'contrato': corpo = <Contrato {...props} />; break
       case 'medicaoDetalhe': corpo = <MedicaoDetalhe {...props} />; break
+      case 'notas': corpo = <Notas {...props} />; break
+      case 'nota': corpo = <Nota {...props} />; break
       case 'estrutura': corpo = <Estrutura {...props} />; break
       case 'usuarios': corpo = <Usuarios {...props} />; break
       case 'mais': corpo = <Mais itens={barra.extras} goto={goto} />; break

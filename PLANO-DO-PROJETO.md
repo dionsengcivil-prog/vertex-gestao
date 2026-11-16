@@ -46,10 +46,10 @@ Cada pessoa do canteiro lança o que é dela (mestre o diário, assistente o ava
 
 ## Ordem de construção
 
-O escopo é grande: 23 telas, 26 tabelas e 8 perfis. É bem acima do tamanho saudável de uma primeira versão (6 telas, 7 tabelas). Por isso a construção é em duas ondas, e a Onda 2 só começa com a Onda 1 em uso real no canteiro.
+O escopo é grande: 24 telas, 27 tabelas e 8 perfis. É bem acima do tamanho saudável de uma primeira versão (6 telas, 7 tabelas). Por isso a construção é em duas ondas, e a Onda 2 só começa com a Onda 1 em uso real no canteiro.
 
 - **Onda 1 — o que mata as 4 a 6 horas:** Estrutura da obra, Diário, Avanço e ciclo de laje, Programação semanal e restrições, Contratos e medição, Painel da obra (blocos 1, 2, 3 e 5), Usuários.
-- **Onda 2 — dinheiro e material:** Notas e almoxarifado, Estoque e apropriação de insumo, Orçamento, Financeiro (bloco 4 do painel), Solicitações de máquina e hora extra, Resumo da Diretoria e do Cliente.
+- **Onda 2 — dinheiro e material:** Notas e almoxarifado, Estoque e apropriação de insumo, Orçamento, Financeiro (bloco 4 do painel), Solicitações de máquina e hora extra, Cronograma de suprimentos, Resumo da Diretoria e do Cliente.
 
 ## Funcionalidades
 
@@ -151,6 +151,20 @@ O escopo é grande: 23 telas, 26 tabelas e 8 perfis. É bem acima do tamanho sau
 ### 12. Usuários
 - **Abre em:** lista. O gerente libera a conta, escolhe o perfil e as obras de cada pessoa.
 
+### 13. Cronograma de suprimentos (Onda 2)
+- **Abre em:** lista, com o que vence primeiro no topo.
+- **Mostra:** cada linha é um suprimento que precisa chegar. Há dois tipos: **Insumo por torre** (o material do dia a dia: insumo, quantidade, torre e pavimento) e **Pacote de compra** (o que tem fabricação longa: uma descrição, como "Esquadrias de alumínio · Fase 1"). Os dois têm fase, fornecedor, prazo de entrega em dias e cinco datas: necessidade na obra, limite para pedir (calculada: necessidade menos o prazo de entrega), pedido feito, prometida pelo fornecedor e chegada real. A etapa (A pedir, Pedido feito, Entregue) e a situação (Em dia, Atenção, Atrasado) saem das datas; ninguém digita.
+- **Ordem e filtro:** atrasados primeiro, depois por data limite para pedir; filtros por etapa, tipo, fase e torre.
+- **Ações:** planejador e gerente criam a linha e mudam a necessidade e o prazo; administrativo registra o pedido (data, fornecedor e data prometida); almoxarife registra a chegada. Assistente e mestre só leem.
+- **Ao clicar num item:** abre a linha, com as datas e quem registrou cada uma.
+- **Vazio:** "Nenhum suprimento programado. Comece pelo que precisa chegar nas próximas semanas."
+- **Nasce e morre:** planejador cria; ao registrar a chegada vira Entregue e sai da lista padrão, ficando no filtro Entregue como histórico.
+- **Sem valor em reais:** o cronograma trata de data e quantidade. É por isso que assistente e mestre podem vê-lo.
+- **Quando está Atrasado:** passou do limite para pedir sem pedido feito; ou a data prometida é depois da necessidade; ou passou da prometida sem chegada. **Atenção:** faltam 7 dias ou menos para o limite de pedir.
+- `[DESCOBRIR NO USO: etapas intermediárias do pacote (cotação, fabricação)]` — por enquanto ficou: as mesmas cinco datas dos insumos.
+- `[DESCOBRIR NO USO: ligar a linha à nota fiscal do pedido e abrir restrição sozinho quando atrasar]` — por enquanto ficou: sem ligação automática; quem vê o atraso abre a restrição na Programação.
+- `[APROVADO SEM REVISÃO: as regras de Atenção (7 dias) e de Atrasado foram propostas pela IA]`
+
 ## Unidade principal
 
 **Obra** — vai existir mais de uma? **sim**. Alguém trabalha em mais de uma ao mesmo tempo? **sim** (o gerente, no mínimo).
@@ -201,6 +215,10 @@ Obra de partida: 2 fases, 5 torres, 562 apartamentos. Fase 1: 2 torres de 86 apa
 | **Ver saúde financeira e custo estimado** | sim | sim | não | só comprometido e incorrido de notas | não | não | sim | não |
 | Importar ou editar orçamento | sim | não | não | não | não | não | não | não |
 | Criar solicitação de máquina/hora extra | sim | sim | não | não | não | sim | não | não |
+| Ver cronograma de suprimentos | sim | sim | sim | sim | sim | sim | não | não |
+| Criar linha e mudar necessidade ou prazo | sim | sim | não | não | não | não | não | não |
+| Registrar pedido feito e data prometida | sim | sim | não | sim | não | não | não | não |
+| Registrar chegada do suprimento | sim | sim | não | não | sim | não | não | não |
 | Aprovar solicitação | sim | sim | não | não | não | não | não | não |
 | Alterar estrutura (fase, torre, serviço, contrato) | sim | não | não | não | não | não | não | não |
 | Apagar registro | sim | não | não | não | não | não | não | não |
@@ -294,11 +312,11 @@ Login → (conta nova) Aguardando liberação
     ├── Programação  (semana, restrições, PPC)
     ├── Medição  →  Contrato  →  Medição
     ├── Diário  →  Diário do dia
-    └── Mais: Notas · Estoque · Financeiro · Solicitações · Estrutura* · Usuários* · Meu perfil
-└── Assistente:      Avanço · Diário · Programação · Estoque · Meu perfil
-└── Administrativo:  Notas · Financeiro de notas · Meu perfil
-└── Almoxarife:      Notas · Estoque · Meu perfil
-└── Mestre:          Diário · Solicitações · Avanço (só leitura) · Meu perfil
+    └── Mais: Notas · Estoque · Suprimentos · Financeiro · Solicitações · Estrutura* · Usuários* · Meu perfil
+└── Assistente:      Avanço · Diário · Programação · Estoque · Suprimentos · Meu perfil
+└── Administrativo:  Notas · Suprimentos · Financeiro de notas · Meu perfil
+└── Almoxarife:      Notas · Estoque · Suprimentos · Meu perfil
+└── Mestre:          Diário · Solicitações · Avanço (só leitura) · Suprimentos (só leitura) · Meu perfil
 └── Diretoria:       Resumo por torre · Meu perfil
 └── Cliente:         Resumo do cliente · Meu perfil
 ```
@@ -334,7 +352,7 @@ Login → (conta nova) Aguardando liberação
 | Produção | `avancos`, `atividades_semana`, `restricoes` |
 | Medição | `contratos`, `contrato_itens`, `medicoes` |
 | Material (Onda 2) | `fornecedores`, `insumos`, `notas`, `nota_itens`, `movimentos_estoque` |
-| Dinheiro e apoio (Onda 2) | `orcamentos`, `solicitacoes` |
+| Dinheiro e apoio (Onda 2) | `orcamentos`, `solicitacoes`, `suprimentos` |
 
 Regra que protege o valor: preço e dinheiro ficam em tabelas próprias (`contrato_itens`, `medicoes`, `notas`, `nota_itens`, `orcamentos`). As tabelas de produção (`avancos`, `diarios`, `fotos`) não guardam valor nenhum, e por isso mestre e assistente podem vê-las sem enxergar custo.
 
@@ -356,6 +374,8 @@ Proposta: **"Quanto custou, em material e mão de obra, cada pavimento de cada t
 
 # A conta que vai chegar depois
 
+- `[PENDENTE: tabela "suprimentos" no PRD-BACKEND.md]` — custo: o módulo Cronograma de suprimentos está no plano e no PRD-FRONTEND, mas a tabela e as permissões dele ainda não foram escritas no PRD do banco.
+- `[PENDENTE: colunas das planilhas atuais de cronograma de suprimentos]` — custo: o módulo foi escrito sem olhar as planilhas em uso; pode faltar coluna que o dono usa hoje.
 - `[PENDENTE: caso concreto de medição errada ou atrasada]` — custo: o sistema fica sem um exemplo real para testar a medição.
 - `[PENDENTE: data em que quer estar usando]` — custo: sem data não dá para dizer se a Onda 2 cabe; a 10 horas por semana, as duas ondas são um projeto de meses, não de semanas.
 - `[PENDENTE: número de pavimentos de cada torre e lista de serviços medíveis]` — custo: a estrutura da obra é o primeiro cadastro; sem ela nada mais se lança.
@@ -366,6 +386,7 @@ Proposta: **"Quanto custou, em material e mão de obra, cada pavimento de cada t
 
 # Decidir depois de usar
 
+- `[DESCOBRIR NO USO: etapas intermediárias do pacote de compra e ligação do cronograma de suprimentos com notas e restrições]` — por enquanto ficou: cinco datas por linha, sem ligação automática.
 - `[DESCOBRIR NO USO: retenção, adiantamento e descontos na medição]` — por enquanto ficou: medição = quantidade conferida × preço unitário, com um campo de desconto e uma observação.
 - `[DESCOBRIR NO USO: avanço por quantidade ou por percentual]` — por enquanto ficou: quantidade na unidade do serviço.
 - `[DESCOBRIR NO USO: referências de interface de que gosta e que odeia]` — por enquanto ficou: tema claro, identidade Azul Vertex, estilo Painel, botões grandes no celular.

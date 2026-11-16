@@ -15,6 +15,7 @@ import { valorDaMedicao } from './medicao.js'
 import {
   avancoEditavel, diarioEditavel, medicaoEditavel, podeEntrarNaMedicao, transicaoDaMedicao,
   transicaoDoAvanco, transicaoDoDiario, validarAtividade, validarAvanco, validarCiclo, validarObra,
+  conferirRecebimento, notaEditavel, totalDaNota, transicaoDaNota,
 } from './fluxos.js'
 
 const copiar = (lista) => lista.map((linha) => ({ ...linha }))
@@ -40,6 +41,10 @@ const t = {
   fotos: copiar(mock.mockFotos),
   atividades_semana: copiar(mock.mockAtividadesSemana),
   restricoes: copiar(mock.mockRestricoes),
+  fornecedores: copiar(mock.mockFornecedores),
+  insumos: copiar(mock.mockInsumos),
+  notas: copiar(mock.mockNotas),
+  nota_itens: copiar(mock.mockNotaItens),
 }
 
 let obraAtual = null
@@ -549,4 +554,107 @@ export function salvarUsuario(profileId, { role, obra_ids, ativo }) {
   for (let i = t.membros.length - 1; i >= 0; i--) if (t.membros[i].profile_id === profileId) t.membros.splice(i, 1)
   for (const obra_id of obra_ids) t.membros.push({ id: novoId('m'), obra_id, profile_id: profileId })
   return resposta({ ...pessoa })
+}
+
+// ---------- Notas e almoxarifado (tem valor: gerente, planejador, administrativo, almoxarife) ----------
+
+export function carregarNotas() {
+  const sem = negado(pode.verNotas)
+  if (sem) return falha(sem)
+  return resposta({
+    notas: copiar(daObra(t.notas)),
+    itens: copiar(daObra(t.nota_itens)),
+    fornecedores: copiar(daObra(t.fornecedores)),
+    insumos: copiar(daObra(t.insumos)),
+  })
+}
+
+// Escolhe-se da lista ou escreve-se um nome novo; nome que já existe é reaproveitado.
+function acharOuCriar(lista, prefixo, id, nomeNovo, extra = {}) {
+  if (id) return achar(lista, id) || null
+  const nome = (nomeNovo || '').trim()
+  if (!nome) return null
+  return daObra(lista).find((x) => x.nome.toLowerCase() === nome.toLowerCase()) || inserir(lista, prefixo, { nome, ...extra })
+}
+
+export function salvarNota({ fornecedor_id, novo_fornecedor, numero, data_emissao, fase_id, anexo_url }) {
+  const sem = negado(pode.lancarNota)
+  if (sem) return falha(sem)
+  if (!achar(t.fases, fase_id)) return falha('Fase não encontrada nesta obra.')
+  if (data_emissao > hoje()) return falha('A data de emissão não pode ser no futuro.')
+  if (!fornecedor_id && !(novo_fornecedor || '').trim()) return falha('Escolha um fornecedor da lista ou escreva o nome de um novo.')
+  const fornecedor = acharOuCriar(t.fornecedores, 'fo', fornecedor_id, novo_fornecedor, { cnpj: null })
+  if (!fornecedor) return falha('Fornecedor não encontrado nesta obra.')
+  if (daObra(t.notas).some((n) => n.fornecedor_id === fornecedor.id && n.numero === numero.trim())) {
+    return falha('Esta nota já foi lançada: mesmo fornecedor e mesmo número.')
+  }
+  return resposta(inserir(t.notas, 'n', {
+    fase_id, fornecedor_id: fornecedor.id, numero: numero.trim(), data_emissao, valor_total: 0, anexo_url: vazio(anexo_url),
+    status: 'Lançada', observacao_conferencia: null, lancada_por_id: usuario.id,
+    conferida_por_id: null, conferida_em: null, validada_por_id: null, validada_em: null,
+  }))
+}
+
+// Acha a nota e confere se os itens ainda podem mudar (antes da conferência).
+function notaAberta(notaId) {
+  const sem = negado(pode.lancarNota)
+  if (sem) return { erro: sem }
+  const nota = achar(t.notas, notaId)
+  if (!nota) return { erro: 'Nota não encontrada nesta obra.' }
+  if (!notaEditavel(nota)) return { erro: 'O recebimento desta nota já foi conferido; os itens não mudam mais.' }
+  return { nota }
+}
+
+const itensDaNota = (notaId) => daObra(t.nota_itens).filter((i) => i.nota_id === notaId)
+
+export function adicionarItemDaNota(notaId, { insumo_id, novo_insumo, unidade, quantidade, valor_unitario }) {
+  const { nota, erro } = notaAberta(notaId)
+  if (erro) return falha(erro)
+  if (!(Number(quantidade) > 0) || !(Number(valor_unitario) > 0)) return falha('Quantidade e valor unitário precisam ser maiores que zero.')
+  if (!insumo_id && !(novo_insumo || '').trim()) return falha('Escolha um insumo da lista ou escreva o nome de um novo.')
+  if (!insumo_id && !(unidade || '').trim()) return falha('Informe a unidade do insumo novo (kg, saco, m³, un…).')
+  const insumo = acharOuCriar(t.insumos, 'in', insumo_id, novo_insumo, { unidade: (unidade || '').trim() })
+  if (!insumo) return falha('Insumo não encontrado nesta obra.')
+  if (itensDaNota(notaId).some((i) => i.insumo_id === insumo.id)) return falha('Este insumo já está na nota.')
+  const item = inserir(t.nota_itens, 'ni', {
+    nota_id: notaId, insumo_id: insumo.id, quantidade: Number(quantidade), valor_unitario: Number(valor_unitario), quantidade_recebida: null,
+  })
+  nota.valor_total = totalDaNota(itensDaNota(notaId))
+  return resposta({ ...item })
+}
+
+export function removerItemDaNota(notaId, itemId) {
+  const { nota, erro } = notaAberta(notaId)
+  if (erro) return falha(erro)
+  remover(t.nota_itens, itemId)
+  nota.valor_total = totalDaNota(itensDaNota(notaId))
+  return resposta(true)
+}
+
+// O almoxarife informa quanto chegou de cada item: { [itemId]: quantidade }.
+export function conferirNota(notaId, recebidas, observacao = '') {
+  const sem = negado(pode.conferirNota)
+  if (sem) return falha(sem)
+  const nota = achar(t.notas, notaId)
+  if (!nota) return falha('Nota não encontrada nesta obra.')
+  const itens = itensDaNota(notaId)
+  const { status, erro } = conferirRecebimento(nota, itens, recebidas, observacao)
+  if (erro) return falha(erro)
+  for (const item of itens) item.quantidade_recebida = Number(recebidas[item.id])
+  Object.assign(nota, { status, observacao_conferencia: vazio(observacao.trim()), conferida_por_id: usuario.id, conferida_em: hoje() })
+  return resposta({ ...nota })
+}
+
+// acao: 'aguardar' | 'validar'
+export function mudarStatusDaNota(notaId, acao) {
+  const sem = negado(acao === 'validar' ? pode.validarNota : pode.lancarNota)
+  if (sem) return falha(sem)
+  const nota = achar(t.notas, notaId)
+  if (!nota) return falha('Nota não encontrada nesta obra.')
+  const { status, erro } = transicaoDaNota(nota, acao)
+  if (erro) return falha(erro)
+  nota.status = status
+  // shortcut: validar ainda não gera a entrada no estoque; fazer junto com o módulo Estoque.
+  if (status === 'Validada') Object.assign(nota, { validada_por_id: usuario.id, validada_em: hoje() })
+  return resposta({ ...nota })
 }

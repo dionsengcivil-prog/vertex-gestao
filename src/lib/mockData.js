@@ -273,3 +273,45 @@ export const mockRestricoes = [
   { id: 'r4', obra_id: 'o1', torre_id: 't1', pavimento_id: 't1-p6', servico_id: 's4', tipo: 'Mão de obra', descricao: 'Equipe reduzida', data_abertura: '2026-11-03', responsavel_id: 'p2', data_prometida: null, data_remocao: '2026-11-06', status: 'Removida', criado_por_id: 'p3' },
   { id: 'r5', obra_id: 'o2', torre_id: 'bb', pavimento_id: 'bb-p2', servico_id: 's7', tipo: 'Material', descricao: 'Bloco estrutural 14 em falta', data_abertura: '2026-11-11', responsavel_id: 'p2', data_prometida: '2026-11-16', data_remocao: null, status: 'Aberta', criado_por_id: 'p2' },
 ]
+
+// ---------- Notas e almoxarifado ----------
+export const mockFornecedores = [
+  { id: 'fo1', obra_id: 'o1', nome: 'Aços Norte', cnpj: null },
+  { id: 'fo2', obra_id: 'o1', nome: 'Cimentos Sul', cnpj: null },
+  { id: 'fo3', obra_id: 'o1', nome: 'Blocos Leste', cnpj: null },
+  { id: 'fo4', obra_id: 'o1', nome: 'Argamassas Oeste', cnpj: null },
+  { id: 'fo5', obra_id: 'o2', nome: 'Blocos Centro', cnpj: null },
+]
+
+export const mockInsumos = [
+  { id: 'in1', obra_id: 'o1', nome: 'Aço CA-50 10 mm', unidade: 'kg' },
+  { id: 'in2', obra_id: 'o1', nome: 'Cimento CP-II', unidade: 'saco' },
+  { id: 'in3', obra_id: 'o1', nome: 'Bloco de concreto 14', unidade: 'un' },
+  { id: 'in4', obra_id: 'o1', nome: 'Argamassa estabilizada', unidade: 'm³' },
+  { id: 'in5', obra_id: 'o2', nome: 'Bloco estrutural 14', unidade: 'un' },
+]
+
+const nota = (id, obra_id, fase_id, fornecedor_id, numero, data_emissao, valor_total, status, extra = {}) => ({
+  id, obra_id, fase_id, fornecedor_id, numero, data_emissao, valor_total, anexo_url: null, status,
+  observacao_conferencia: null, lancada_por_id: 'p4', conferida_por_id: null, conferida_em: null,
+  validada_por_id: null, validada_em: null, ...extra,
+})
+
+// Uma nota de cada status na o1; uma só, recém-lançada, na o2.
+export const mockNotas = [
+  nota('n1', 'o1', 'f1', 'fo1', '4410', '2026-11-06', 148200, 'Aguardando material'),
+  nota('n2', 'o1', 'f1', 'fo2', '9912', '2026-11-09', 21450, 'Validada', { conferida_por_id: 'p5', conferida_em: '2026-11-10', validada_por_id: 'p4', validada_em: '2026-11-10' }),
+  nota('n3', 'o1', 'f1', 'fo3', '2031', '2026-11-11', 37800, 'Divergente', { conferida_por_id: 'p5', conferida_em: '2026-11-12', observacao_conferencia: 'Faltaram 2 paletes.' }),
+  nota('n4', 'o1', 'f2', 'fo2', '5520', '2026-11-12', 9750, 'Recebida conferida', { conferida_por_id: 'p5', conferida_em: '2026-11-13' }),
+  nota('n5', 'o1', 'f1', 'fo4', '7781', '2026-11-13', 12300, 'Lançada'),
+  nota('n6', 'o2', 'f3', 'fo5', '3310', '2026-11-12', 30600, 'Lançada'),
+]
+
+export const mockNotaItens = [
+  { id: 'ni1', obra_id: 'o1', nota_id: 'n1', insumo_id: 'in1', quantidade: 19000, valor_unitario: 7.8, quantidade_recebida: null },
+  { id: 'ni2', obra_id: 'o1', nota_id: 'n2', insumo_id: 'in2', quantidade: 650, valor_unitario: 33, quantidade_recebida: 650 },
+  { id: 'ni3', obra_id: 'o1', nota_id: 'n3', insumo_id: 'in3', quantidade: 12000, valor_unitario: 3.15, quantidade_recebida: 11760 },
+  { id: 'ni4', obra_id: 'o1', nota_id: 'n4', insumo_id: 'in2', quantidade: 300, valor_unitario: 32.5, quantidade_recebida: 300 },
+  { id: 'ni5', obra_id: 'o1', nota_id: 'n5', insumo_id: 'in4', quantidade: 30, valor_unitario: 410, quantidade_recebida: null },
+  { id: 'ni6', obra_id: 'o2', nota_id: 'n6', insumo_id: 'in5', quantidade: 9000, valor_unitario: 3.4, quantidade_recebida: null },
+]

@@ -34,7 +34,7 @@ O sistema guarda várias obras e nunca mistura os dados delas.
 ## Ordem de construção
 
 - **Onda 1:** Login, Aguardando liberação, Painel da obra (blocos 1, 2, 3 e 5), Avanço, Pavimento, Programação, Diário, Diário do dia, Medição (lista), Contrato, Medição (detalhe), Estrutura da obra, Usuários, Meu perfil.
-- **Onda 2:** Notas, Nota, Estoque, Saída de insumo, Orçamento, Financeiro (e bloco 4 do painel), Solicitações, Resumo por torre, Resumo do cliente.
+- **Onda 2:** Notas, Nota, Estoque, Saída de insumo, Orçamento, Financeiro (e bloco 4 do painel), Solicitações, Suprimentos, Resumo por torre, Resumo do cliente.
 
 As telas da Onda 2 aparecem no menu só quando forem construídas.
 
@@ -57,11 +57,11 @@ O valor entre parênteses é o que fica gravado; o texto antes é o que aparece 
 ```
 Login → Aguardando liberação (conta nova)
 └── Gerente / Planejador: Painel · Avanço · Programação · Medição · Mais
-        Mais: Diário · Notas · Estoque · Financeiro · Orçamento* · Solicitações · Estrutura* · Usuários* · Meu perfil
-└── Assistente:     Avanço · Diário · Programação · Estoque · Meu perfil
-└── Administrativo: Notas · Financeiro · Meu perfil
-└── Almoxarife:     Notas · Estoque · Meu perfil
-└── Mestre:         Diário · Solicitações · Avanço · Meu perfil
+        Mais: Diário · Notas · Estoque · Suprimentos · Financeiro · Orçamento* · Solicitações · Estrutura* · Usuários* · Meu perfil
+└── Assistente:     Avanço · Diário · Programação · Estoque · Mais (Suprimentos · Meu perfil)
+└── Administrativo: Notas · Suprimentos · Financeiro · Meu perfil
+└── Almoxarife:     Notas · Estoque · Suprimentos · Meu perfil
+└── Mestre:         Diário · Solicitações · Avanço · Suprimentos · Meu perfil
 └── Diretoria:      Resumo por torre · Meu perfil
 └── Cliente:        Resumo do cliente · Meu perfil
 ```
@@ -669,6 +669,75 @@ Um cartão por torre com avanço físico (pavimentos concretados ÷ total) e eta
 
 ---
 
+## Tela: Suprimentos (Onda 2)
+
+O cronograma de suprimentos: o que precisa chegar, para onde e até quando.
+
+**Quem acessa:** gerente, planejador (criam e mudam); administrativo (registra pedido); almoxarife (registra chegada); assistente e mestre (só leitura).
+**Chega aqui por:** item Suprimentos do menu.
+
+**O que aparece**
+Três números no topo: Atrasados, Para pedir em 7 dias, Aguardando chegada. Abaixo, os filtros: etapa (A pedir, Pedido feito, Entregue; padrão: as duas primeiras), tipo, fase e torre. Depois a lista, com os atrasados primeiro e, entre os demais, a menor data limite para pedir no topo. Cada linha mostra: o insumo com a quantidade (ou a descrição do pacote), o local (fase, torre e pavimento), a data que importa agora — "pedir até 14/11", "prometido para 20/11" ou "chegou em 18/11" —, a necessidade na obra, a etiqueta da etapa e a etiqueta da situação. Nenhum valor em reais.
+
+**Como a etapa e a situação são calculadas** (ninguém digita)
+- Etapa: **Entregue** se tem chegada real; senão **Pedido feito** se tem data de pedido; senão **A pedir**.
+- Limite para pedir = necessidade na obra − prazo de entrega em dias.
+- Situação **Atrasado**: A pedir e hoje passou do limite para pedir; ou Pedido feito com data prometida depois da necessidade; ou Pedido feito e hoje passou da data prometida.
+- Situação **Atenção**: A pedir e faltam 7 dias ou menos para o limite.
+- Situação **Em dia**: os demais. Linha Entregue não tem situação; mostra "no prazo" ou "N dias depois da necessidade".
+
+**Campos e informações — Linha do cronograma**
+
+| Campo | Tipo | Obrigatório | Observação |
+|---|---|---|---|
+| Tipo | lista | sim | Insumo por torre, Pacote de compra |
+| Insumo | lista (com "novo insumo") | só em Insumo por torre | |
+| Quantidade | número | só em Insumo por torre | na unidade do insumo; maior que zero |
+| Descrição | texto | só em Pacote de compra | ex.: Esquadrias de alumínio · Fase 1 |
+| Fase | lista | sim | |
+| Torre | lista | sim em Insumo por torre | em Pacote de compra, vazio = a fase inteira |
+| Pavimento | lista | não | pavimentos da torre escolhida |
+| Necessidade na obra | data | sim | |
+| Prazo de entrega (dias) | número | sim | inteiro, zero ou mais |
+| Limite para pedir | data | — | calculado; só leitura |
+| Observação | texto | não | |
+
+**Campos e informações — Registrar pedido**
+
+| Campo | Tipo | Obrigatório | Observação |
+|---|---|---|---|
+| Fornecedor | lista (com "novo fornecedor") | sim | |
+| Data do pedido | data | sim | padrão hoje; não pode ser no futuro |
+| Data prometida | data | sim | não pode ser antes da data do pedido |
+
+**Campos e informações — Registrar chegada**
+
+| Campo | Tipo | Obrigatório | Observação |
+|---|---|---|---|
+| Chegada real | data | sim | padrão hoje; não pode ser antes da data do pedido |
+| Observação | texto | não | ex.: chegou parcial |
+
+**Ações**
+- **+ Novo suprimento:** abre o formulário da linha; ao salvar, entra na lista como A pedir.
+- **Clicar numa linha:** abre a linha, com as cinco datas e quem registrou o pedido e a chegada.
+- **Editar:** muda os campos da linha. Depois de Pedido feito, só necessidade, prazo e observação.
+- **Registrar pedido:** em linha A pedir; passa para Pedido feito.
+- **Registrar chegada:** em linha Pedido feito; passa para Entregue e sai da lista padrão.
+- **Desfazer pedido / Desfazer chegada:** volta uma etapa, para corrigir registro errado.
+- **Excluir:** só em linha A pedir.
+
+**Regras por perfil**
+- **Gerente e planejador:** tudo.
+- **Administrativo:** registra e desfaz o pedido; não cria linha, não muda necessidade, não registra chegada.
+- **Almoxarife:** registra e desfaz a chegada; não cria linha nem registra pedido.
+- **Assistente e mestre:** só leitura, sem nenhum botão de gravar.
+- **Diretoria e cliente:** não têm a tela.
+
+**Estado vazio**
+Sem nenhuma linha: "Nenhum suprimento programado. Comece pelo que precisa chegar nas próximas semanas.", com o botão **+ Novo suprimento** para quem pode criar. Com filtro sem resultado: "Nenhum suprimento com estes filtros."
+
+---
+
 ## Textos do sistema
 
 - Botões: Salvar, Cancelar, Novo, Editar, Excluir, Enviar, Conferir, Aprovar, Devolver, Validar, Exportar, Sair.
@@ -781,6 +850,18 @@ Movimentos de estoque
   12/11 · Transferência · Cimento CP-II · 60 sacos · Fase 1 → Fase 2
   13/11 · Estorno · Cimento CP-II · 10 sacos · Torre 2 ("lançado em dobro")
 
+Cronograma de suprimentos (hoje = 13/11/2026)
+  Insumo por torre · Aço CA-50 10 mm · 18.000 kg · Fase 1 · Torre 2 · 13º · necessidade 24/11 · prazo 12 dias · limite 12/11 · sem pedido · A pedir · Atrasado
+  Insumo por torre · Cimento CP-II · 400 sacos · Fase 1 · Torre 1 · necessidade 27/11 · prazo 5 dias · limite 22/11 · sem pedido · A pedir · Em dia
+  Insumo por torre · Bloco de concreto 14 · 12.000 un · Fase 1 · Torre 1 · 7º · necessidade 23/11 · prazo 6 dias · limite 17/11 · sem pedido · A pedir · Atenção
+  Insumo por torre · Argamassa estabilizada · 30 m³ · Fase 1 · Torre 1 · 6º · necessidade 18/11 · prazo 3 dias · pedido 11/11 · Argamassas Oeste · prometido 17/11 · Pedido feito · Em dia
+  Insumo por torre · Aço CA-50 10 mm · 15.000 kg · Fase 1 · Torre 2 · 12º · necessidade 09/11 · prazo 12 dias · pedido 27/10 · Aços Norte · prometido 14/11 · Pedido feito · Atrasado
+  Pacote de compra · Esquadrias de alumínio · Fase 1 · necessidade 15/03/2027 · prazo 90 dias · limite 15/12/2026 · sem pedido · A pedir · Em dia
+  Pacote de compra · Elevadores · Fase 1 · Torre 1 · necessidade 01/06/2027 · prazo 240 dias · pedido 20/09/2026 · Elevadores Modelo · prometido 20/05/2027 · Pedido feito · Em dia
+  Pacote de compra · Fôrmas do térreo · Fase 2 · Torre 3 · necessidade 23/11 · prazo 10 dias · limite 13/11 · sem pedido · A pedir · Atenção
+  Insumo por torre · Cimento CP-II · 650 sacos · Fase 1 · necessidade 12/11 · prazo 5 dias · pedido 06/11 · Cimentos Sul · prometido 10/11 · chegou 10/11 · Entregue · no prazo
+  Obra 2: Insumo por torre · Bloco estrutural 14 · 9.000 un · Bloco B · 2º · necessidade 16/11 · prazo 7 dias · limite 09/11 · sem pedido · A pedir · Atrasado
+
 Orçamento (valor previsto)
   Fase 1 · Receita · R$ 96.000.000,00
   Fase 1 · Torre 1 · Mão de obra · R$ 9.400.000,00
@@ -823,6 +904,12 @@ Onda 2
 - [ ] O administrativo vê no Financeiro só comprometido e incorrido de notas.
 - [ ] A diretoria vê o custo por torre e consegue abrir por empreiteiro.
 - [ ] O cliente vê só fotos publicadas e nenhum valor.
+- [ ] Em Suprimentos, a linha sem pedido que passou do limite para pedir aparece como Atrasado, no topo da lista.
+- [ ] Mudar a necessidade ou o prazo de entrega recalcula o limite para pedir na hora.
+- [ ] Registrar o pedido passa a linha para Pedido feito; registrar a chegada passa para Entregue e ela sai da lista padrão.
+- [ ] O administrativo não vê o botão de criar linha nem o de registrar chegada; o almoxarife não vê o de registrar pedido.
+- [ ] Assistente e mestre veem a lista de Suprimentos sem nenhum botão de gravar, e nenhum valor em reais aparece na tela.
+- [ ] Um suprimento lançado na Obra 1 não aparece na Obra 2.
 
 ## A conta que vai chegar depois
 

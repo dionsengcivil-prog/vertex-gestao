@@ -100,3 +100,33 @@ export function validarObra(obra, outras) {
   if (obra.data_meta_entrega && obra.data_meta_entrega < obra.data_inicio) return 'A data-meta de entrega não pode ser antes do início.'
   return null
 }
+
+// ---------- Nota: Lançada → Aguardando material → Recebida conferida | Divergente → Validada ----------
+
+// Cabeçalho e itens só mudam antes da conferência do almoxarife.
+export function notaEditavel(nota) {
+  return nota.status === 'Lançada' || nota.status === 'Aguardando material'
+}
+
+export function totalDaNota(itens) {
+  return Math.round(itens.reduce((s, i) => s + i.quantidade * i.valor_unitario, 0) * 100) / 100
+}
+
+// A conferência decide sozinha: tudo igual é Recebida conferida; qualquer
+// diferença é Divergente, e aí a observação é obrigatória.
+export function conferirRecebimento(nota, itens, recebidas, observacao = '') {
+  if (nota.status === 'Validada') return erro('Nota validada não é conferida de novo.')
+  if (!itens.length) return erro('Adicione pelo menos um item antes de conferir.')
+  if (itens.some((i) => !(Number(recebidas[i.id]) >= 0) || recebidas[i.id] === '')) return erro('Informe a quantidade recebida de cada item.')
+  const divergente = itens.some((i) => Number(recebidas[i.id]) !== i.quantidade)
+  if (divergente && !observacao.trim()) return erro('A quantidade recebida é diferente da nota. Escreva o que aconteceu na observação.')
+  return { status: divergente ? 'Divergente' : 'Recebida conferida' }
+}
+
+export function transicaoDaNota(nota, acao) {
+  if (acao === 'aguardar') return nota.status === 'Lançada' ? { status: 'Aguardando material' } : erro('Só nota Lançada pode ir para Aguardando material.')
+  if (acao === 'validar') {
+    return nota.status === 'Recebida conferida' ? { status: 'Validada' } : erro('Só nota com recebimento conferido, sem divergência, pode ser validada.')
+  }
+  return erro('Ação desconhecida.')
+}

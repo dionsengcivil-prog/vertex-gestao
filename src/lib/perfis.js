@@ -23,7 +23,7 @@ export const TELAS = {
   estrutura: { nome: 'Estrutura', icone: 'estrutura' },
   usuarios: { nome: 'Usuários', icone: 'usuarios' },
   perfil: { nome: 'Meu perfil', curto: 'Perfil', icone: 'perfil' },
-  notas: { nome: 'Notas', icone: 'notas', onda: 2 },
+  notas: { nome: 'Notas', icone: 'notas' },
   estoque: { nome: 'Estoque', icone: 'estoque', onda: 2 },
   financeiro: { nome: 'Financeiro', curto: 'Financ.', icone: 'financeiro', onda: 2 },
   orcamento: { nome: 'Orçamento', icone: 'orcamento', onda: 2 },
@@ -80,6 +80,11 @@ export const pode = {
   removerRestricao: em('gerente', 'planejador'),
   prepararMedicao: em('gerente', 'planejador'),
   aprovarMedicao: em('gerente'),
+  // Notas: quem lança não confere, e quem confere não valida.
+  lancarNota: em('gerente', 'administrativo', 'almoxarife'),
+  conferirNota: em('almoxarife'),
+  validarNota: em('gerente', 'administrativo'),
+  verNotas: em('gerente', 'planejador', 'administrativo', 'almoxarife'),
   alterarEstrutura: em('gerente'),
   gerenciarUsuarios: em('gerente'),
 }
