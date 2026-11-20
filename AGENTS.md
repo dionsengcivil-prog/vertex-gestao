@@ -226,7 +226,6 @@ Esta seção é a passagem de bastão entre conversas. Ao retomar, leia, confira
 
 ### Pela metade
 
-- **Envio ao GitHub pendente.** Em 16/11 o trabalho foi gravado em commits locais, mas o `git push` foi barrado pelo modo de permissão da conversa. Confira com `git status -sb`: se aparecer "ahead", peça ao dono para autorizar o envio ou rodar `git push` ele mesmo.
 - **Rodada 1 de testes (Notas):** 1 de 13 itens aprovado pelo dono. Faltam 12 na página, de `n02` a `n13`. O dono escreveu "Funcionou" no chat, mas só o item da lista estava marcado.
 - **Revisão de código de Notas feita em 16/11, nada corrigido ainda.** O dono pediu só o relatório. Achados que pedem decisão ou conserto:
   - **Gerente não confere recebimento.** O plano (matriz, linha "Conferir recebimento") diz que não; a proposta aprovada pelo dono dizia "gerente faz tudo". O código segue a matriz. Precisa de decisão do dono. Efeito colateral: na obra CM-02 só há gerente e planejador, então a nota de exemplo de lá nunca sai de Lançada.
